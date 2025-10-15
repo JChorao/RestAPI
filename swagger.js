@@ -1,22 +1,30 @@
-// swagger.js
-const path = require('path');
-const swaggerJSDoc = require('swagger-jsdoc');
+const swaggerJsdoc = require('swagger-jsdoc');
+
+// Detecta se está rodando no Azure
+const isAzure = process.env.WEBSITE_SITE_NAME;
+
+// Define o URL base dinamicamente
+const serverUrl = isAzure
+  ? `https://${process.env.WEBSITE_SITE_NAME}.azurewebsites.net`
+  : 'http://localhost:3000';
 
 const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Feedback API',
+      title: 'API de Usuários',
       version: '1.0.0',
-      description: 'API para envio de feedbacks'
+      description: 'Exemplo de REST API com Swagger e Azure',
     },
     servers: [
-      // força o URL do Azure como padrão
-      { url: 'https://testechorao.azurewebsites.net' }
-    ]
+      {
+        url: serverUrl,
+      },
+    ],
   },
-  apis: [path.join(__dirname, 'routes/*.js')]
+  apis: ['./routes/*.js'], // Onde estão as anotações Swagger
 };
 
-const swaggerSpec = swaggerJSDoc(options);
+const swaggerSpec = swaggerJsdoc(options);
+
 module.exports = swaggerSpec;

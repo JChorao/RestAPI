@@ -1,4 +1,5 @@
 // server.js
+
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
@@ -7,42 +8,50 @@ const feedbackRouter = require('./routes/feedback');
 const app = express();
 app.use(express.json());
 
-// Swagger UI no seu domínio
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-// Feedback endpoints
+// Rotas da API
 app.use('/api/feedback', feedbackRouter);
 
-// Formulário HTML já apontando para o domínio de produção
+// Documentação Swagger
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Rota raiz com formulário HTML
 app.get('/', (req, res) => {
   res.send(`
-    <html>
-      <head><meta charset="UTF-8"><title>Envio de Feedback</title></head>
-      <body>
-        <form id="feedbackForm">
-          <input type="text" name="message" placeholder="Seu feedback" required/>
-          <button type="submit">Enviar</button>
-        </form>
-        <script>
-          document.getElementById('feedbackForm')
-            .addEventListener('submit', async e => {
-              e.preventDefault();
-              const message = e.target.message.value;
-              await fetch('https://testechorao.azurewebsites.net/api/feedback', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ message })
-              });
-              alert('Feedback enviado!');
-            });
-        </script>
-      </body>
-    </html>
+    <h1>Formulário de Feedback</h1>
+    <form id="feedbackForm">
+      Diga o que achou da Apresentacao: <input type="text" name="fname" id="fname">
+      <input type="submit" value="Enviar">
+    </form>
+    <script>
+      const form = document.getElementById('feedbackForm');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const message = document.getElementById('fname').value;
+        if (!message) {
+          alert("O campo deve ser preenchido!");
+          return;
+        }
+        // Envia o feedback para a API
+        const response = await fetch('/api/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+        const data = await response.json();
+        alert("Feedback enviado: " + data.message);
+      });
+    </script>
   `);
 });
 
-// Em produção, o Azure define process.env.PORT automaticamente
+// ✅ O Azure define automaticamente process.env.PORT
 const port = process.env.PORT || 3000;
-app.listen(port, () => 
-  console.log(`Server rodando em https://testechorao.azurewebsites.net (porta ${port})`)
-);
+
+app.listen(port, () => {
+  console.log(`🚀 Servidor rodando na porta ${port}`);
+  if (process.env.WEBSITE_SITE_NAME) {
+    console.log(`🌐 Executando no ambiente Azure: ${process.env.WEBSITE_SITE_NAME}`);
+  } else {
+    console.log("💻 Executando localmente");
+  }
+});
